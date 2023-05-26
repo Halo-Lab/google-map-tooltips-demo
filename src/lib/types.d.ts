@@ -1,3 +1,3 @@
 export type MapMarkersType = {
-  coordinates: google.maps.LatLng, id: string, priority: number, name: string
+  coordinates: {lat: number, lng: number}, id: string, priority: number, name: string
 }

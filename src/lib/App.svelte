@@ -7,7 +7,7 @@
 	type TPopup = google.maps.OverlayView & {
 		hide: () => void;
 		show: () => void;
-		getPosition: (pos: google.maps.Point) => TElementPos;
+		getPosition: () => TElementPos;
 		mark: MapMarkersType;
 		popupsContainer: HTMLDivElement;
 		content: HTMLDivElement;
@@ -36,6 +36,7 @@
 
 	export let map: google.maps.Map;
 	export let markers: MapMarkersType[];
+	export let hidePopupsThatsOutOfMap = false;
 	const popup: Map<string, TPopup> = new Map();
 	let popupsContainer: HTMLDivElement;
 	let Popup: IPopup;
@@ -43,25 +44,6 @@
 	function mapMoves(bounds: google.maps.LatLngBounds | undefined) {
 		dispatch('mapMove', { bounds });
 	}
-
-	// Check if map popup is visible
-	const mapMoveHandler = () => {
-		const bounds = map.getBounds();
-		markers.forEach((mark, i) => {
-			const currentPopup = popup.get(mark.id);
-			if (!currentPopup) return;
-			if (bounds?.contains(mark.coordinates)) {
-				if (!currentPopup.getMap()) {
-					currentPopup.setMap(map);
-				}
-			} else {
-				if (!!currentPopup.getMap()) {
-					currentPopup.setMap(null);
-				}
-			}
-		});
-		mapMoves(bounds);
-	};
 
 	$: if (markers.length && Popup) {
 		// Id of all popup ids
@@ -87,34 +69,50 @@
 			});
 		}
 
-		const popupCopy = new Map(popup);
-
-		for (const [key1, value1] of popupCopy) {
-			for (const [key2, value2] of popupCopy) {
-				if (!value1.getProjection()) continue;
-				if (key1 === key2) continue;
-				if (
-					elementsOverlap(
-						value1.getPosition(
-							value1.getProjection().fromLatLngToDivPixel(value1.mark.coordinates)!
-						),
-						value2.getPosition(
-							value2.getProjection().fromLatLngToDivPixel(value2.mark.coordinates)!
-						)
-					)
-				) {
-					console.log(value1.mark.name, '---overlaping-->', value2.mark.name);
-					if (value1.mark.priority > value2.mark.priority) {
-						popup.get(key2)?.hide();
-						popupCopy.delete(key1);
-					} else {
-						popup.get(key1)?.hide();
-						popupCopy.delete(key2);
+		// Fix of calling onAdd after getPosition method
+		// because it returns h: 0 and w: 0 of the elemnt in this order
+		requestAnimationFrame(() => {
+			const popupCopy = new Map(popup);
+			for (const [key1, value1] of popupCopy) {
+				popup.get(key1)?.show();
+				// popup.get(key1)?.show();
+				for (const [key2, value2] of popupCopy) {
+					if (!value1.getProjection() || !value2.getProjection()) continue;
+					if (key1 === key2) continue;
+					if (elementsOverlap(value1.getPosition(), value2.getPosition())) {
+						if (value1.mark.priority > value2.mark.priority) {
+							popup.get(key2)?.hide();
+							popupCopy.delete(key2);
+						} else {
+							popup.get(key1)?.hide();
+							popupCopy.delete(key1);
+						}
 					}
 				}
 			}
-		}
+		});
 	}
+	// Check if map popup is visible
+	const mapMoveHandler = () => {
+		const bounds = map.getBounds();
+		// Hide popup's thats out of map viewport
+		if (hidePopupsThatsOutOfMap) {
+			markers.forEach((mark) => {
+				const currentPopup = popup.get(mark.id);
+				if (!currentPopup) return;
+				if (bounds?.contains(mark.coordinates)) {
+					if (!currentPopup.getMap()) {
+						currentPopup.setMap(map);
+					}
+				} else {
+					if (!!currentPopup.getMap()) {
+						currentPopup.setMap(null);
+					}
+				}
+			});
+		}
+		mapMoves(bounds);
+	};
 
 	onMount(async () => {
 		await tick();
@@ -130,6 +128,7 @@
 			popupsContainer: HTMLDivElement;
 			content: HTMLDivElement;
 			containerDiv: HTMLDivElement;
+			size: { w: number; h: number };
 
 			constructor(mark: MapMarkersType, popupsContainer: HTMLDivElement) {
 				super();
@@ -137,6 +136,7 @@
 				this.popupsContainer = popupsContainer;
 				this.content = document.createElement('div');
 				this.containerDiv = document.createElement('div');
+				this.size = { w: 0, h: 0 };
 
 				this.content.classList.add(
 					'bg-white',
@@ -173,16 +173,23 @@
 			}
 
 			hide() {
-				this.content.classList.add('invisible');
+				if (this.content.style.visibility !== 'hidden') {
+					this.content.style.visibility = 'hidden';
+				}
 			}
 
 			show() {
-				this.content.classList.add('visible');
+				if (this.content.style.visibility !== `visible`) {
+					this.content.style.visibility = `visible`;
+				}
 			}
-			getPosition(pos: google.maps.Point) {
-				const h = 25 / 2;
-				const w = 43 / 2;
-				const { x, y } = pos;
+			getPosition() {
+				const { x, y } = this.getProjection().fromLatLngToDivPixel(this.mark.coordinates) || {
+					x: 0,
+					y: 0
+				};
+				const h = this.content.offsetHeight / 2;
+				const w = this.content.offsetWidth / 2;
 
 				return {
 					left: x - w,

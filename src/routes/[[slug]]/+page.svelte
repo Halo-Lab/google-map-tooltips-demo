@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { MapMarkers } from 'google-map-tooltips-svelte';
-	import type { MapMarkersType } from 'google-map-tooltips-svelte';
+	import { SvelteComponentTyped, onMount } from 'svelte';
+	// import { MapMarkers } from 'google-map-tooltips-svelte';
+	import type { MapMarkersType, MapMarkers as TMapMarkers } from 'google-map-tooltips-svelte';
 	import type { PageData } from './$types.d.ts';
 	import { goto } from '$app/navigation';
 
@@ -16,17 +16,23 @@
 		lng: -100
 	};
 	let markers: MapMarkersType[] = [];
+	let MapMarkers: typeof TMapMarkers;
 
 	$: markers = data.markers;
 
 	onMount(async () => {
-		const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
-		map = new Map(container, {
-			zoom,
-			center,
-			zoomControl: true,
-			panControl: true
-		});
+		async function initMap() {
+			const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
+			map = new Map(container, {
+				zoom,
+				center,
+				zoomControl: true,
+				panControl: true
+			});
+			const module = await import('google-map-tooltips-svelte');
+			MapMarkers = module.MapMarkers;
+		}
+		initMap();
 	});
 
 	const onMapMove = (event: CustomEvent<{ bounds: google.maps.LatLngBounds }>) => {
@@ -42,10 +48,50 @@
 </script>
 
 <svelte:head>
-	<script src={'https://maps.googleapis.com/maps/api/js?key='}></script>
+	<script>
+		((g) => {
+			var h,
+				a,
+				k,
+				p = 'The Google Maps JavaScript API',
+				c = 'google',
+				l = 'importLibrary',
+				q = '__ib__',
+				m = document,
+				b = window;
+			b = b[c] || (b[c] = {});
+			var d = b.maps || (b.maps = {}),
+				r = new Set(),
+				e = new URLSearchParams(),
+				u = () =>
+					h ||
+					(h = new Promise(async (f, n) => {
+						await (a = m.createElement('script'));
+						e.set('libraries', [...r] + '');
+						for (k in g)
+							e.set(
+								k.replace(/[A-Z]/g, (t) => '_' + t[0].toLowerCase()),
+								g[k]
+							);
+						e.set('callback', c + '.maps.' + q);
+						a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+						d[q] = f;
+						a.onerror = () => (h = n(Error(p + ' could not load.')));
+						a.nonce = m.querySelector('script[nonce]')?.nonce || '';
+						m.head.append(a);
+					}));
+			d[l]
+				? console.warn(p + ' only loads once. Ignoring:', g)
+				: (d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)));
+		})({
+			key: '',
+			v: 'weekly'
+		});
+	</script>
 </svelte:head>
 
-<MapMarkers on:mapMove={onMapMove} {map} {markers} />
+<!-- <MapMarkers on:mapMove={onMapMove} {map} {markers} /> -->
+<svelte:component this={MapMarkers} on:mapMove={onMapMove} {map} {markers} />
 <div class="map" bind:this={container} />
 
 <div class="flex items-center gap-1 justify-center mt-1 flex-col">

@@ -19,9 +19,7 @@
 		}
 	},
 	"files": [
-		"dist",
-		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*"
+		"dist"
 	],
 	"peerDependencies": {
 		"svelte": "^3.54.0"
@@ -37,6 +35,7 @@
 		"eslint": "^8.28.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-svelte": "^2.26.0",
+		"google-map-tooltips-svelte": "^0.0.4",
 		"postcss": "^8.4.23",
 		"prettier": "^2.8.0",
 		"prettier-plugin-svelte": "^2.8.1",

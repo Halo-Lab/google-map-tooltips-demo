@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { MapMarkers } from '$lib/index.js';
-	import type { MapMarkersType } from '$lib/types.js';
+	import { MapMarkers } from 'google-map-tooltips-svelte';
+	import type { MapMarkersType } from 'google-map-tooltips-svelte';
 	import type { PageData } from './$types.d.ts';
 	import { goto } from '$app/navigation';
 
@@ -28,8 +28,6 @@
 		});
 	});
 
-	// $: console.log(markers);
-
 	const onMapMove = (event: CustomEvent<{ bounds: google.maps.LatLngBounds }>) => {
 		const bounds = event.detail.bounds;
 		goto(`${bounds.toUrlValue()}+${amount}`);
@@ -47,7 +45,6 @@
 </svelte:head>
 
 <MapMarkers on:mapMove={onMapMove} {map} {markers} />
-
 <div class="map" bind:this={container} />
 
 <div class="flex items-center gap-1 justify-center mt-1 flex-col">

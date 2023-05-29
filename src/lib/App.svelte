@@ -37,6 +37,7 @@
 	export let map: google.maps.Map;
 	export let markers: MapMarkersType[];
 	export let hidePopupsThatsOutOfMap = false;
+	export let contentClasses: string[] = [];
 	const popup: Map<string, TPopup> = new Map();
 	let popupsContainer: HTMLDivElement;
 	let Popup: IPopup;
@@ -74,10 +75,10 @@
 		requestAnimationFrame(() => {
 			const popupCopy = new Map(popup);
 			for (const [key1, value1] of popupCopy) {
+				if (!value1.getProjection()) break;
 				popup.get(key1)?.show();
-				// popup.get(key1)?.show();
 				for (const [key2, value2] of popupCopy) {
-					if (!value1.getProjection() || !value2.getProjection()) continue;
+					if (!value2.getProjection()) break;
 					if (key1 === key2) continue;
 					if (elementsOverlap(value1.getPosition(), value2.getPosition())) {
 						if (value1.mark.priority > value2.mark.priority) {
@@ -86,6 +87,7 @@
 						} else {
 							popup.get(key1)?.hide();
 							popupCopy.delete(key1);
+							continue;
 						}
 					}
 				}
@@ -128,7 +130,6 @@
 			popupsContainer: HTMLDivElement;
 			content: HTMLDivElement;
 			containerDiv: HTMLDivElement;
-			size: { w: number; h: number };
 
 			constructor(mark: MapMarkersType, popupsContainer: HTMLDivElement) {
 				super();
@@ -136,7 +137,6 @@
 				this.popupsContainer = popupsContainer;
 				this.content = document.createElement('div');
 				this.containerDiv = document.createElement('div');
-				this.size = { w: 0, h: 0 };
 
 				this.content.classList.add(
 					'bg-white',
@@ -147,7 +147,8 @@
 					'overflow-auto',
 					'max-h-16',
 					'shadow-md',
-					'absolute'
+					'absolute',
+					...contentClasses
 				);
 				this.content.style.zIndex = `${mark.priority}`;
 				this.content.textContent = mark.name;

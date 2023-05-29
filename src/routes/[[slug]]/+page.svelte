@@ -41,7 +41,7 @@
 </script>
 
 <svelte:head>
-	<script src={'https://maps.googleapis.com/maps/api/js?key='} async defer></script>
+	<script src={'https://maps.googleapis.com/maps/api/js?key='}></script>
 </svelte:head>
 
 <MapMarkers on:mapMove={onMapMove} {map} {markers} />

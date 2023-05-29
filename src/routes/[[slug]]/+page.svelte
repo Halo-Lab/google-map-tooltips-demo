@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { MapMarkersType, MapMarkers as TMapMarkers } from 'google-map-tooltips-svelte';
+	import { Loader } from '@googlemaps/js-api-loader';
 	import type { PageData } from './$types.d.ts';
 	import { goto } from '$app/navigation';
+	import { load } from './+page.js';
 
 	export let data: PageData;
 
@@ -16,11 +18,15 @@
 	};
 	let markers: MapMarkersType[] = [];
 	let MapMarkers: typeof TMapMarkers;
+	const loader = new Loader({
+		apiKey: '',
+		version: 'weekly'
+	});
 
 	$: markers = data.markers;
 
 	onMount(async () => {
-		async function initMap() {
+		loader.load().then(async () => {
 			const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
 			map = new Map(container, {
 				zoom,
@@ -30,8 +36,7 @@
 			});
 			const module = await import('google-map-tooltips-svelte');
 			MapMarkers = module.MapMarkers;
-		}
-		initMap();
+		});
 	});
 
 	const onMapMove = (event: CustomEvent<{ bounds: google.maps.LatLngBounds }>) => {

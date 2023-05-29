@@ -1,4 +1,5 @@
-import type { MapMarkersType } from "$lib/types.js";
+import type { MapMarkersType } from "google-map-tooltips-svelte";
+
 
 type TBounds = {
   east:number,north: number,south: number,west: number

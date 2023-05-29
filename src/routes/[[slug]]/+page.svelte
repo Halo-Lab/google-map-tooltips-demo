@@ -20,7 +20,8 @@
 	$: markers = data.markers;
 
 	onMount(async () => {
-		map = new google.maps.Map(container, {
+		const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
+		map = new Map(container, {
 			zoom,
 			center,
 			zoomControl: true,

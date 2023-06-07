@@ -1,30 +1,24 @@
-import type { MapMarkersType } from "google-map-tooltips-svelte";
-
-
-type TBounds = {
-  east:number,north: number,south: number,west: number
-}
-
-
+import type { TBounds } from '$lib/types.js';
+import type { MapMarkersType } from 'google-map-tooltips-svelte';
 
 const randNum = ({ max, min } = { max: 1, min: -1 }) =>
-		max === min ? max : Math.random() * (max - min) + min;
+	max === min ? max : Math.random() * (max - min) + min;
 
-	const generateRandCoordsInBounds = (bounds: TBounds) => {
-		const lngBounds = { max: bounds.east, min: bounds.west};
-		const latBounds = { max: bounds.south, min: bounds.north };
-		const lat = randNum(latBounds);
-		const lng = randNum(lngBounds);
-		return {lat,lng};
-	};
+const generateRandCoordsInBounds = (bounds: TBounds) => {
+	const lngBounds = { max: bounds.east, min: bounds.west };
+	const latBounds = { max: bounds.south, min: bounds.north };
+	const lat = randNum(latBounds);
+	const lng = randNum(lngBounds);
+	return { lat, lng };
+};
 
-	const randMarkers = () => {
-		let cachedAmount = 0;
-		let cachedMarkers: MapMarkersType[] | null = null;
-		return (bounds: TBounds, amount: number): MapMarkersType[] => {
-			if(cachedAmount === amount && cachedMarkers) {
-				return cachedMarkers;
-			}
+const randMarkers = () => {
+	let cachedAmount = 0;
+	let cachedMarkers: MapMarkersType[] | null = null;
+	return (bounds: TBounds, amount: number): MapMarkersType[] => {
+		if (cachedAmount === amount && cachedMarkers) {
+			return cachedMarkers;
+		}
 		cachedAmount = amount;
 		const newMarkers = [];
 		for (let i = 0; i < amount; i++) {
@@ -37,6 +31,7 @@ const randNum = ({ max, min } = { max: 1, min: -1 }) =>
 		}
 		cachedMarkers = newMarkers;
 		return newMarkers;
-	}};
+	};
+};
 
 export default randMarkers();
